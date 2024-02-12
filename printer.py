@@ -64,8 +64,7 @@ def print_column(pdf, col_x,col_y,column_width, column_height, questions, index)
     # pdf.multi_cell(x,y+5, test_text)
     pdf.set_font('Arial', '', 12)
     pdf.set_y(col_y)
-    while pdf.get_y() < pdf.h-40:
-        print(len(questions), index, questions[index])
+    while pdf.get_y() < pdf.h-40 and index < len(questions):
         if questions[index] == "across":
             pdf.set_x(col_x)
             pdf.set_font('Arial', 'B', 14)
@@ -80,10 +79,30 @@ def print_column(pdf, col_x,col_y,column_width, column_height, questions, index)
             pdf.set_y(pdf.get_y()+10)
             index=index+1
         pdf.set_x(col_x)
-        print(pdf.get_y())
         pdf.multi_cell(column_width,column_height, questions[index], align="L")
         index+=1
     return index
+
+def write_out_template_clues(filename, vertical, horizontal):
+    with open(filename+"_question_template.txt", "w") as output_file:
+        output_file.write("across\n")
+        for i in vertical:
+            output_file.write(str(i)+":" + "\n")
+        output_file.write("down\n")
+        for i in horizontal:
+            output_file.write(str(i)+":" + "\n")
+
+def get_clues(filename):
+    #first check if a file exists
+    if os.path.isfile(filename+"_question.txt"):
+        print("found questions text file")
+        with open(filename+"_question.txt", "r") as input_file:
+            lines = input_file.readlines()
+        return [line.strip() for line in lines]
+    else:
+        with open(filename+"_question_template.txt", "r") as input_file:
+            lines = input_file.readlines()
+        return [line.strip() for line in lines]
 
 def write_puzzle(grid, grid_to_num, square_size, pdf, solution=True):
     pdf.set_fill_color(255)
@@ -103,6 +122,7 @@ def write_puzzle(grid, grid_to_num, square_size, pdf, solution=True):
                 if (i,j) in grid_to_num:
                     write_small_number(str(grid_to_num[(i,j)]), x, y, pdf)
 
+def write_clues(clues, grid, square_size, pdf):
     # write out the clues
     pdf.set_font('Arial', 'B', 16)
     column_width = 68
@@ -112,52 +132,27 @@ def write_puzzle(grid, grid_to_num, square_size, pdf, solution=True):
     second_colum_y = square_size*len(grid)+10
     third_colum_x = 135
     third_colum_y = square_size*len(grid)+10
-    x = first_colum_x
-    y = first_colum_y
 
-    text=[]
-    scratch_text = "This is a longer clue that goes over multiple lines"
-    text.append("across")
-    qs=60
-    for i in range(qs):
-        text.append(str(i) + ": "+ scratch_text)
-        if i == int(qs/2):
-            text.append("down")
-
-    index = print_column(pdf, first_colum_x, first_colum_y, column_width, 5, text, 0)
-    index = print_column(pdf, second_colum_x, second_colum_y, column_width, 5, text, index)
-    index = print_column(pdf, third_colum_x, third_colum_y, column_width, 5, text, index)
-
-    
-
-
-
-
-    # ## colum 2
-    # pdf.set_y(second_colum_y)
-    # pdf.set_x(second_colum_x)
-    # while pdf.get_y() < pdf.h-50:
-    #     pdf.set_x(second_colum_x)
-    #     pdf.multi_cell(column_width,5, test_text, align="L")
-    
-    # for i in range(2):
-    #     pdf.set_x(50)
-    #     pdf.text(x+30,y, "Across")
-    #     pdf.multi_cell(50,5, test_text, align="R")
-
+    index = print_column(pdf, first_colum_x, first_colum_y, column_width, 5, clues, 0)
+    index = print_column(pdf, second_colum_x, second_colum_y, column_width, 5, clues, index)
+    index = print_column(pdf, third_colum_x, third_colum_y, column_width, 5, clues, index)
 
 
 
 input_filename = sys.argv[1]
 grid = read_in_solution(input_filename)
 filename = os.path.splitext(input_filename)[0]
-
 grid_to_num, vertical, horizontal = gen_numbers(grid)
+write_out_template_clues(filename, horizontal, vertical)
+clues = get_clues(filename)
+print (clues)
 pdf = FPDF()
 pdf.add_page()
 pdf.set_font('Arial', 'B', 16)
 square_size=9
 write_puzzle(grid, grid_to_num, square_size, pdf, solution=False)
+write_clues(clues, grid, square_size, pdf)
 pdf.add_page()
 write_puzzle(grid, grid_to_num, square_size,pdf, solution=True)
+write_clues(clues,grid, square_size, pdf)
 pdf.output(filename+"_sol"+".pdf")
