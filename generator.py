@@ -22,6 +22,7 @@ __email__ = "jeansebastien.gonsette@gmail.com"
 # ############################################################################
 
 import os
+import sys
 import re
 import platform
 import random
@@ -34,7 +35,7 @@ from libWizium import Wizium
 
 PATH = './../Wizium/Binaries/Linux/libWizium.so'
 # DICO_PATH = './../../Dictionaries/Fr_Simple.txt'
-DICO_PATH = '/home/mooney/projects/crosswords/facebook_words/our_words.txt'
+DICO_PATH = '/home/mooney/projects/crosswords/crosswords_v2/db/our_words.txt'
 
 
 # ============================================================================
@@ -49,7 +50,9 @@ def draw (wiz):
 
 def write_out(wiz, filename):
     lines = wiz.grid_read ()
-    with open(filename, "w") as output_file:
+    path = "./puzzles/"+filename+"/grid.txt"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as output_file:
         for line in lines:
             output_file.write(line)
 
@@ -150,20 +153,20 @@ def example_1():
     solve (wiz, max_black=0, heuristic_level=2)
 
 
-def winnie_puzzle():
+def winnie_puzzle(filename):
      # Create a Wizium instance
     wiz = Wizium (os.path.join (os.getcwd (), PATH))
     load_dictionary(wiz, DICO_PATH)
     # set_grid_5(wiz)
     print("about to solve")
-    size = 15
+    size = 10
     wiz.grid_set_size(size,size)
-    solve(wiz, max_black=45, heuristic_level=2, black_mode="ANY")
-    write_out(wiz,"winnie.txt")
+    solve(wiz, max_black=58, heuristic_level=0, black_mode="DIAG")
+    write_out(wiz,filename)
 
 # ============================================================================
 """Main"""
 # ============================================================================
 
-
-winnie_puzzle()
+filename = sys.argv[1]
+winnie_puzzle(filename)

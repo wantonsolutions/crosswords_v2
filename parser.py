@@ -1,7 +1,9 @@
 import json
+import os
 # prefix="/home/mooney/projects/your_activity_across_facebook/inbox/camillemoore_10161885047663975/"
 prefix='/home/mooney/projects/crosswords/database/stew-facebook-history/messages/inbox/camillemoore_10161885047663975/'
 # prefix="/home/mooney/projects/facebook_parser/"
+db_dir="./db"
 filenames = [
     # "parser.py",
     'message_1.json',
@@ -46,19 +48,23 @@ for top in word_count:
     print(top)
     if any(char.isdigit() for char in  top[1]):
         continue
-    if top[0] < 3:
-        continue
+    # if top[0] < 3:
+    #     continue
     if len(top[1]) < 3:
         continue
     output[top[1]]=top[0]
+
+#write out file to json and to text
 filename="our_words"
-with open(filename+".txt", "w") as output_file:
+path = db_dir + "/" + filename
+os.makedirs(os.path.dirname(path), exist_ok=True)
+with open(path+".txt", "w") as output_file:
     for line in output:
         output_file.write(line + "\n")
 
 output = json.dumps(output, indent=4)
 print(output)
-with open(filename+".json", "w") as outputfile:
+with open(path+".json", "w") as outputfile:
     outputfile.write(output)
 
 

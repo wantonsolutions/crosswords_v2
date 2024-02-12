@@ -16,7 +16,8 @@ def write_black_square(x, y, square_size,pdf):
     pdf.set_fill_color(255)
 
 def read_in_solution(filename):
-    with open(filename, "r") as input_file:
+    full_filename = "./puzzles/"+filename+"/grid.txt"
+    with open(full_filename, "r") as input_file:
         lines = input_file.readlines()
 
     lines = [line.strip() for line in lines]
@@ -84,7 +85,8 @@ def print_column(pdf, col_x,col_y,column_width, column_height, questions, index)
     return index
 
 def write_out_template_clues(filename, vertical, horizontal):
-    with open(filename+"_question_template.txt", "w") as output_file:
+    full_filename = "./puzzles/"+filename+"/template.txt"
+    with open(full_filename, "w") as output_file:
         output_file.write("across\n")
         for i in vertical:
             output_file.write(str(i)+":" + "\n")
@@ -94,13 +96,15 @@ def write_out_template_clues(filename, vertical, horizontal):
 
 def get_clues(filename):
     #first check if a file exists
-    if os.path.isfile(filename+"_question.txt"):
+    question_file = "./puzzles/"+filename+"/question.txt"
+    template_file = "./puzzles/"+filename+"/template.txt"
+    if os.path.isfile(question_file):
         print("found questions text file")
-        with open(filename+"_question.txt", "r") as input_file:
+        with open(question_file, "r") as input_file:
             lines = input_file.readlines()
         return [line.strip() for line in lines]
     else:
-        with open(filename+"_question_template.txt", "r") as input_file:
+        with open(template_file, "r") as input_file:
             lines = input_file.readlines()
         return [line.strip() for line in lines]
 
@@ -128,9 +132,9 @@ def write_clues(clues, grid, square_size, pdf):
     column_width = 68
     first_colum_x = 5
     first_colum_y = 7
-    second_colum_x = 70
+    second_colum_x = 75
     second_colum_y = square_size*len(grid)+10
-    third_colum_x = 135
+    third_colum_x = 145
     third_colum_y = square_size*len(grid)+10
 
     index = print_column(pdf, first_colum_x, first_colum_y, column_width, 5, clues, 0)
@@ -155,4 +159,6 @@ write_clues(clues, grid, square_size, pdf)
 pdf.add_page()
 write_puzzle(grid, grid_to_num, square_size,pdf, solution=True)
 write_clues(clues,grid, square_size, pdf)
-pdf.output(filename+"_sol"+".pdf")
+
+full_filename = "./puzzles/"+filename+"/"+filename+".pdf"
+pdf.output(full_filename)
