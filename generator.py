@@ -159,9 +159,9 @@ def winnie_puzzle(filename):
     load_dictionary(wiz, DICO_PATH)
     # set_grid_5(wiz)
     print("about to solve")
-    size = 10
+    size = 8
     wiz.grid_set_size(size,size)
-    solve(wiz, max_black=58, heuristic_level=0, black_mode="DIAG")
+    solve(wiz, max_black=9, heuristic_level=2, black_mode="DIAG")
     write_out(wiz,filename)
 
 # ============================================================================

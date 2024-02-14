@@ -2,13 +2,20 @@ from fpdf import FPDF
 import sys
 import os
 
-def write_full_letter(letter, x, y, pdf):
-    pdf.set_font('Arial', 'B', 16)
-    pdf.text(x+3,y+7,letter)
+def write_full_letter(letter, x, y, conf, pdf):
+    pdf.set_font('Arial', 'B', conf["header_font"])
+    square_size=conf["square_size"]
+    y_plus = square_size/2 + conf["header_font"]/8
+    x_plus = square_size/2 - conf["header_font"]/8
+    pdf.text(x+x_plus,y+y_plus,letter)
 
-def write_small_number(number, x, y, pdf):
-    pdf.set_font('Arial', 'B', 8)
-    pdf.text(x+0.5,y+2.8,number)
+def write_small_number(number, x, y, conf, pdf):
+    fsize = conf["q_font"] - 4
+    pdf.set_font('Arial', 'B', fsize)
+    square_size=conf["square_size"]
+    x_plus = 0.5
+    y_plus = fsize/4 + 0.5
+    pdf.text(x + x_plus,y+ y_plus,number)
 
 def write_black_square(x, y, square_size,pdf):
     pdf.set_fill_color(0)
@@ -61,26 +68,35 @@ def gen_numbers(grid, min_word_length=2):
                 counter+=1
     return grid_to_num, vertical, horizontal
 
-def print_column(pdf, col_x,col_y,column_width, column_height, questions, index):
+def print_column(pdf, conf, questions, index, col_num):
     # pdf.multi_cell(x,y+5, test_text)
-    pdf.set_font('Arial', '', 12)
+    col_x=5
+    col_y=7
+    square_size=conf["square_size"]
+    grid_size=conf["grid_size"]
+    if col_num > 0:
+        col_x=col_x+(conf["width"]*col_num)
+        col_y=square_size*grid_size+10
+
+    pdf.set_font('Arial', '', conf["q_font"])
     pdf.set_y(col_y)
-    while pdf.get_y() < pdf.h-40 and index < len(questions):
+    while pdf.get_y() < pdf.h-38 and index < len(questions):
         if questions[index] == "across":
             pdf.set_x(col_x)
-            pdf.set_font('Arial', 'B', 14)
-            pdf.text(col_x+30,pdf.get_y(), "Across")
-            pdf.set_font('Arial', '', 12)
+            pdf.set_font('Arial', 'B', conf["header_font"])
+            pdf.text(col_x+17,pdf.get_y(), "Across")
+            pdf.set_y(pdf.get_y()+3)
+            pdf.set_font('Arial', '', conf["q_font"])
             index=index+1
         if questions[index] == "down":
             pdf.set_x(col_x)
-            pdf.set_font('Arial', 'B', 14)
+            pdf.set_font('Arial', 'B', conf["header_font"])
             pdf.text(col_x+30,pdf.get_y()+8, "Down")
-            pdf.set_font('Arial', '', 12)
+            pdf.set_font('Arial', '', conf["q_font"])
             pdf.set_y(pdf.get_y()+10)
             index=index+1
         pdf.set_x(col_x)
-        pdf.multi_cell(column_width,column_height, questions[index], align="L")
+        pdf.multi_cell(conf["width"]-2,conf["height"], questions[index], align="L")
         index+=1
     return index
 
@@ -108,7 +124,9 @@ def get_clues(filename):
             lines = input_file.readlines()
         return [line.strip() for line in lines]
 
-def write_puzzle(grid, grid_to_num, square_size, pdf, solution=True):
+def write_puzzle(grid, grid_to_num, conf, pdf, solution=True):
+    n=len(grid)
+    square_size=conf[n]["square_size"]
     pdf.set_fill_color(255)
     x_required = square_size*len(grid[0])
     start_x = pdf.w - (x_required + 5)
@@ -122,26 +140,22 @@ def write_puzzle(grid, grid_to_num, square_size, pdf, solution=True):
             else:
                 pdf.rect(x=x, y=y, w=square_size, h=square_size, style="FD")
                 if solution:
-                    write_full_letter(c, x, y, pdf)
+                    write_full_letter(c, x, y, conf[n], pdf)
                 if (i,j) in grid_to_num:
-                    write_small_number(str(grid_to_num[(i,j)]), x, y, pdf)
+                    write_small_number(str(grid_to_num[(i,j)]), x, y, conf[n], pdf)
 
-def write_clues(clues, grid, square_size, pdf):
+def write_clues(clues, grid, conf, pdf):
     # write out the clues
-    pdf.set_font('Arial', 'B', 16)
-    column_width = 68
-    first_colum_x = 5
-    first_colum_y = 7
-    second_colum_x = 75
-    second_colum_y = square_size*len(grid)+10
-    third_colum_x = 145
-    third_colum_y = square_size*len(grid)+10
-
-    index = print_column(pdf, first_colum_x, first_colum_y, column_width, 5, clues, 0)
-    index = print_column(pdf, second_colum_x, second_colum_y, column_width, 5, clues, index)
-    index = print_column(pdf, third_colum_x, third_colum_y, column_width, 5, clues, index)
+    n = len(grid)
+    index = 0
+    for col_num in range(conf[n]["cols"]):
+        index = print_column(pdf, conf[n], clues, index, col_num)
 
 
+conf = {}
+conf[8] = {"width": 70, "height":7, "header_font": 20, "q_font": 16, "cols":3, "grid_size": 8, "square_size": 15}
+conf[15] = {"width": 70, "height":5, "header_font": 16, "q_font": 12, "cols":3, "grid_size": 15, "square_size": 10}
+conf[17] = {"width": 50, "height":4, "header_font": 16, "q_font": 10, "cols":4, "grid_size": 17, "square_size": 9}
 
 input_filename = sys.argv[1]
 grid = read_in_solution(input_filename)
@@ -153,12 +167,11 @@ print (clues)
 pdf = FPDF()
 pdf.add_page()
 pdf.set_font('Arial', 'B', 16)
-square_size=9
-write_puzzle(grid, grid_to_num, square_size, pdf, solution=False)
-write_clues(clues, grid, square_size, pdf)
+write_puzzle(grid, grid_to_num, conf, pdf, solution=False)
+write_clues(clues, grid, conf, pdf)
 pdf.add_page()
-write_puzzle(grid, grid_to_num, square_size,pdf, solution=True)
-write_clues(clues,grid, square_size, pdf)
+write_puzzle(grid, grid_to_num, conf, pdf, solution=True)
+write_clues(clues,grid, conf, pdf)
 
 full_filename = "./puzzles/"+filename+"/"+filename+".pdf"
 pdf.output(full_filename)
